@@ -39,13 +39,28 @@
                 <input type="hidden" name="post" value="{{ post.id }}" />
                 <input type="text" name="comment_text" id="comment_text" placeholder="Make a comment.." value="{{ comment_text }}">
                 {{ comment_text }}
+                <!--<button type="text" name="review" id="Review" value="{{review}}"></button>-->
+                <!--{{review}}-->
                 <input type="submit" class="btn-default btn" value="Comment">
             </form>
         </div>
 
         <div>
             {% for comment in post.comments %}
-                <p><b>{{ comment.user.username }} [{{ comment.created_on }}]:</b> {{ comment.comment_text }}</p>
+                <p><b>{{ comment.user.username }} [{{ comment.created_on }}]:</b> {{ comment.comment_text }}
+                {% if comment.review == "Positive Comment!" %}
+                    <ul>
+                    <li style = "color: green">
+                    </ul>
+                {% elif comment.review == "Neutral Comment!" %}
+                    <ul>
+                    <li style = "color: yellow">
+                    </ul>
+                {% elif comment.review == "Negative Comment!" %}
+                    <ul>
+                    <li style = "color: red">
+                    </ul>
+                {% endif %}
             {% endfor %}
         </div>
 

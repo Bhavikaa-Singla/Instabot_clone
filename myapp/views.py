@@ -6,13 +6,18 @@ from datetime import datetime,timedelta
 from django.utils import timezone
 from djfight.settings import BASE_DIR
 
+from paralleldots import set_api_key,get_api_key,sentiment
 from imgurpython import ImgurClient
-# Create your views here.
 
-YOUR_CLIENT_ID = '8059e06dee9e946'                                                               #client id to access imgur api
+
+
+
+YOUR_CLIENT_ID = '8059e06dee9e946'                                          #client id to access imgur api
 YOUR_CLIENT_SECRET = '9ae7c8f156d74bf836c713baf7b6176f6c644893'
 
 
+API_KEY = 'LrZefXNDQm7zNd4ANTGIAy3kDLNzrh8EiAA2sfU0LX4'                     #api key to access parallel dots api
+set_api_key(API_KEY)
 
 
 #Function declaration which shows sign up form to save the details for new user in the database on making required request
@@ -147,16 +152,24 @@ def like_view(request):
 
 
 def comment_view(request):
-  user = check_validation(request)
-  if user and request.method == 'POST':
-    form = CommentForm(request.POST)
-    if form.is_valid():
-        post_id = form.cleaned_data.get('post').id
-        comment_text = form.cleaned_data.get('comment_text')
-        comment = CommentModel.objects.create(user=user, post_id=post_id, comment_text=comment_text)
-        comment.save()
-        return redirect('/feed/')
+    user = check_validation(request)
+    if user and request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            post_id = form.cleaned_data.get('post').id
+            comment_text = form.cleaned_data.get('comment_text')
+            rev = sentiment(str(comment_text))
+            review = rev["sentiment"]*100
+            if review >= 60 and review <= 100:
+                review = "Positive Comment!"
+            elif review >= 40 and review < 60:
+                review = "Neutral Comment!"
+            elif review >= 0 and review < 40:
+                review = "Negative Comment!"
+            comment = CommentModel.objects.create(user=user, post_id=post_id, comment_text=comment_text, review=review)
+            comment.save()
+            return redirect('/feed/')
+        else:
+            return redirect('/feed/')
     else:
-      return redirect('/feed/')
-  else:
-    return redirect('/login')
+        return redirect('/login')
