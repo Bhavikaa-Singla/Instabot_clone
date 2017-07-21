@@ -75,8 +75,8 @@ def post_view(request):
             form = PostForm(request.POST, request.FILES)
             if form.is_valid():
                 image = form.cleaned_data.get('image')
-                #caption = form.cleaned_data.get('caption')
-                post = PostModel(user=user, image=image)
+                caption = form.cleaned_data.get('caption')
+                post = PostModel(user=user, image=image, caption=caption)
                 post.save()
 
                 path = str(BASE_DIR + post.image.url)
