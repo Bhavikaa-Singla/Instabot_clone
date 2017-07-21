@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from forms import SignUpForm, LoginForm,PostForm,LikeForm,CommentForm
 from models import UserModel, SessionToken,PostModel,LikeModel,CommentModel
 from django.contrib.auth.hashers import make_password, check_password
-from datetime import timedelta
+from datetime import datetime,timedelta
 from django.utils import timezone
 from djfight.settings import BASE_DIR
 
@@ -17,6 +17,7 @@ YOUR_CLIENT_SECRET = '9ae7c8f156d74bf836c713baf7b6176f6c644893'
 
 #Function declaration which shows sign up form to save the details for new user in the database on making required request
 def signup_view(request):
+    today = datetime.now()
     if request.method == "POST":
         form = SignUpForm(request.POST)                                                          #it will save the details of user in the database
         if form.is_valid():
@@ -32,7 +33,7 @@ def signup_view(request):
     else:
         form = SignUpForm()                                                                     #it will show the empty sign up form
 
-    return render(request, 'index.html', {'form': form})
+    return render(request, 'index.html', { 'date_to_show':today, 'form': form})
 
 
 
@@ -51,7 +52,7 @@ def login_view(request):
                     token = SessionToken(user=user)
                     token.create_token()
                     token.save()
-                    response = redirect('feed/')
+                    response = redirect('/feed/')
                     response.set_cookie(key='session_token', value=token.session_token)
                     return response
                 else:
