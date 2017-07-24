@@ -173,3 +173,13 @@ def comment_view(request):
             return redirect('/feed/')
     else:
         return redirect('/login')
+
+
+
+
+#for logging out the user from instagram clone
+def logout_view(request):
+    request.session.modified = True
+    response = redirect('/login/')
+    response.delete_cookie(key='session_token')
+    return response
