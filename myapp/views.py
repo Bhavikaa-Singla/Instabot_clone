@@ -10,6 +10,14 @@ from paralleldots import set_api_key,get_api_key,sentiment
 from imgurpython import ImgurClient
 
 
+# sendgrid api is used to send automated emails to users
+import sendgrid
+# for this we import api key from api.py
+# due to privacy concern i havent uploaded my sendgrid api key
+from api import SENDGRID_API_KEY
+from sendgrid.helpers.mail import*
+
+import ctypes
 
 
 YOUR_CLIENT_ID = '8059e06dee9e946'                                          #client id to access imgur api
@@ -31,10 +39,28 @@ def signup_view(request):
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             # saving data to DB
-            user = UserModel(name=name, password=make_password(password), email=email, username=username)     #make_password is used to encrypt the password.
-            user.save()
-            return render(request, 'success.html')
-            # return redirect('login/')
+            if set('abcdefghijklmnopqrstuvwxyz').intersection(name) and set('abcdefghijklmnopqrstuvwxyz@_1234567890').intersection(username):
+                if len(username) > 4 and len(password) > 5 and name.isspace()== False and username.isspace()== False:
+                    user = UserModel(name=name, password=make_password(password), email=email,username=username)           # make_password is used to encrypt the password.
+                    user.save()
+                    # sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
+                    # from_email = Email("bhavikasingla99@gamil.com")
+                    # to_email = Email(form.cleaned_data['email'])
+                    # subject = "Welcome to Instagram Clone!!"
+                    # content = Content("text/plain", "Thank you for signing up  with Instagram Clone."
+                    #                                 " Team , Instagram Clone.""  ")
+                    # mail = Mail(from_email, subject, to_email, content)
+                    # response = sg.client.mail.send.post(request_body=mail.get())
+                    # print(response.status_code)
+                    # print(response.body)
+                    # print(response.headers)
+                    ctypes.windll.user32.MessageBoxW(0, u"successfully signed up", u"success", 0)
+                    return render(request, 'success.html')
+                else:
+                    ctypes.windll.user32.MessageBoxW(0, u"invalid enteries. please try again", u"Error", 0)
+                    form = SignUpForm()                         # it will show the empty sign up form
+            else:
+                ctypes.windll.user32.MessageBoxW(0, u"invalid name/username", u"error", 0)
     else:
         form = SignUpForm()                                                                     #it will show the empty sign up form
 
@@ -61,7 +87,10 @@ def login_view(request):
                     response.set_cookie(key='session_token', value=token.session_token)
                     return response
                 else:
+                    ctypes.windll.user32.MessageBoxW(0, u"invalid username or password", u"Error", 0)
                     response_data['message'] = 'Incorrect Password! Please try again!'
+            else:
+                ctypes.windll.user32.MessageBoxW(0, u"invalid username or password", u"Error", 0)
 
     elif request.method == 'GET':
         form = LoginForm()
@@ -90,13 +119,15 @@ def post_view(request):
                 post.image_url = client.upload_from_path(path, anon=True)['link']
                 post.save()
 
+                ctypes.windll.user32.MessageBoxW(0, u"post successsfully created", u"SUCCESS", 0)
+
                 return redirect('/feed/')
 
         else:
             form = PostForm()
         return render(request, 'post.html', {'form': form})
     else:
-         return redirect('/login/')
+        return redirect('/login/')
 
 
 
@@ -117,17 +148,13 @@ def check_validation(request):
 def feed_view(request):
     user = check_validation(request)
     if user:
-
         posts = PostModel.objects.all().order_by('created_on')
-
         for post in posts:
             existing_like = LikeModel.objects.filter(post_id=post.id, user=user).first()
             if existing_like:
                 post.has_liked = True
-
         return render(request, 'feed.html', {'posts': posts})
     else:
-
         return redirect('/login/')
 
 
@@ -142,7 +169,19 @@ def like_view(request):
             existing_like = LikeModel.objects.filter(post_id=post_id, user=user).first()
             if not existing_like:
                 LikeModel.objects.create(post_id=post_id, user=user)
+                # like = LikeModel.objects.create(post_id=post_id, user=user)
+                # sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
+                # from_email = Email("apooravsharma1997@gmail.com")
+                # to_email = Email(like.post.user.email)
+                # subject = "Welcome to Instagram Clone!!"
+                # content = Content("text/plain", "someone just liked your post. Go checkout!")
+                # mail = Mail(from_email, subject, to_email, content)
+                # response = sg.client.mail.send.post(request_body=mail.get())
+                # print(response.status_code)
+                # print(response.body)
+                # print(response.headers)
             else:
+                print existing_like.user.username
                 existing_like.delete()
             return redirect('/feed/')
     else:
@@ -168,6 +207,16 @@ def comment_view(request):
                 review = "Negative Comment!"
             comment = CommentModel.objects.create(user=user, post_id=post_id, comment_text=comment_text, review=review)
             comment.save()
+            # sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
+            # from_email = Email("bhavikasingla99@gmail.com")
+            # to_email = Email(comment.post.user.email)
+            # subject = "Welcome to Instagram Clone!!"
+            # content = Content("text/plain", "someone just commented on your post. Go check")
+            # mail = Mail(from_email, subject, to_email, content)
+            # response = sg.client.mail.send.post(request_body=mail.get())
+            # print(response.status_code)
+            # print(response.body)
+            # print(response.headers)
             return redirect('/feed/')
         else:
             return redirect('/feed/')
@@ -183,3 +232,16 @@ def logout_view(request):
     response = redirect('/login/')
     response.delete_cookie(key='session_token')
     return response
+
+
+
+
+# def posts_of_particular_user(request,user_name):
+#     posts=PostModel.objects.all().filter(user__username=user_name)
+#     return render(request,'postsofuser.html',{'posts':posts,'user_name':user_name})
+#     user = check_validation(request)
+#     if user:
+#         posts = PostModel.objects.all().filter(user__username=user_name)
+#         return render(request, 'postsofuser.html', {'posts': posts, 'user_name': user_name})
+#     else:
+#         return redirect('/login/')
