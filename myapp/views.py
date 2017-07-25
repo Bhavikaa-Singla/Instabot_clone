@@ -46,6 +46,17 @@ def signup_view(request):
                 if len(username) > 4 and len(password) > 5 and name.isspace()== False and username.isspace()== False:      #to check that username and password should be greater than paticular length and name, username should not be empty
                     user = UserModel(name=name, password=make_password(password), email=email,username=username)           # make_password is used to encrypt the password.
                     user.save()
+                    # sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
+                    # from_email = Email("bhavikasingla99@gamil.com")
+                    # to_email = Email(form.cleaned_data['email'])
+                    # subject = "Welcome to Instagram Clone!!"
+                    # content = Content("text/plain", "Thank you for signing up  with Instagram Clone."
+                    #                                 " Team , Instagram Clone.""  ")
+                    # mail = Mail(from_email, subject, to_email, content)
+                    # response = sg.client.mail.send.post(request_body=mail.get())
+                    # print(response.status_code)
+                    # print(response.body)
+                    # print(response.headers)
                     ctypes.windll.user32.MessageBoxW(0, u"successfully signed up", u"success", 0)               #to show pop up message on successfully signing up
                     return render(request, 'success.html')
                 else:
