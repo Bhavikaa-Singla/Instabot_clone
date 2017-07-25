@@ -1,21 +1,24 @@
 from django.shortcuts import render, redirect
+# from django we import forms that we want to view
 from forms import SignUpForm, LoginForm,PostForm,LikeForm,CommentForm
+# models are imported
+# in this file we are adding functionality to our project
 from models import UserModel, SessionToken,PostModel,LikeModel,CommentModel
+# hashers library converts passwords to hashcode so that they are safe and increases privacy
 from django.contrib.auth.hashers import make_password, check_password
+# datetime module is used to display / use local time on webpage
 from datetime import datetime,timedelta
 from django.utils import timezone
 from djfight.settings import BASE_DIR
 
 from paralleldots import set_api_key,get_api_key,sentiment
-from imgurpython import ImgurClient
+from imgurpython import ImgurClient                                     #Imgur is an online image sharing community
 
 
-# sendgrid api is used to send automated emails to users
-import sendgrid
-# for this we import api key from api.py
-# due to privacy concern i havent uploaded my sendgrid api key
-from api import SENDGRID_API_KEY
-from sendgrid.helpers.mail import*
+
+import sendgrid                                                         # sendgrid api is used to send automated emails to users
+from api import SENDGRID_API_KEY                                        # for this we import api key from api.py
+from sendgrid.helpers.mail import *                                     # due to privacy concern i havent uploaded my sendgrid api key
 
 import ctypes
 
@@ -40,24 +43,13 @@ def signup_view(request):
             password = form.cleaned_data['password']
             # saving data to DB
             if set('abcdefghijklmnopqrstuvwxyz').intersection(name) and set('abcdefghijklmnopqrstuvwxyz@_1234567890').intersection(username):
-                if len(username) > 4 and len(password) > 5 and name.isspace()== False and username.isspace()== False:
+                if len(username) > 4 and len(password) > 5 and name.isspace()== False and username.isspace()== False:      #to check that username and password should be greater than paticular length and name, username should not be empty
                     user = UserModel(name=name, password=make_password(password), email=email,username=username)           # make_password is used to encrypt the password.
                     user.save()
-                    # sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
-                    # from_email = Email("bhavikasingla99@gamil.com")
-                    # to_email = Email(form.cleaned_data['email'])
-                    # subject = "Welcome to Instagram Clone!!"
-                    # content = Content("text/plain", "Thank you for signing up  with Instagram Clone."
-                    #                                 " Team , Instagram Clone.""  ")
-                    # mail = Mail(from_email, subject, to_email, content)
-                    # response = sg.client.mail.send.post(request_body=mail.get())
-                    # print(response.status_code)
-                    # print(response.body)
-                    # print(response.headers)
-                    ctypes.windll.user32.MessageBoxW(0, u"successfully signed up", u"success", 0)
+                    ctypes.windll.user32.MessageBoxW(0, u"successfully signed up", u"success", 0)               #to show pop up message on successfully signing up
                     return render(request, 'success.html')
                 else:
-                    ctypes.windll.user32.MessageBoxW(0, u"invalid enteries. please try again", u"Error", 0)
+                    ctypes.windll.user32.MessageBoxW(0, u"invalid enteries. please try again", u"Error", 0)        #to show pop up message if error comes
                     form = SignUpForm()                         # it will show the empty sign up form
             else:
                 ctypes.windll.user32.MessageBoxW(0, u"invalid name/username", u"error", 0)
@@ -69,6 +61,7 @@ def signup_view(request):
 
 
 
+#Function declaration which shows login form where user fills username and password
 def login_view(request):
     response_data = {}
     if request.method == "POST":
@@ -101,6 +94,7 @@ def login_view(request):
 
 
 
+#Function declaration which allows user to post images along with caption on the instagram clone app
 def post_view(request):
     user = check_validation(request)
 
@@ -132,6 +126,7 @@ def post_view(request):
 
 
 
+#for validating the user
 def check_validation(request):
     if request.COOKIES.get('session_token'):
         session = SessionToken.objects.filter(session_token=request.COOKIES.get('session_token')).first()
@@ -145,10 +140,11 @@ def check_validation(request):
 
 
 
+#function declaration to show posts of different users on the feed page
 def feed_view(request):
     user = check_validation(request)
     if user:
-        posts = PostModel.objects.all().order_by('created_on')
+        posts = PostModel.objects.all().order_by('-created_on')
         for post in posts:
             existing_like = LikeModel.objects.filter(post_id=post.id, user=user).first()
             if existing_like:
@@ -160,6 +156,7 @@ def feed_view(request):
 
 
 
+#function declaration to like the post of a user on the feed page
 def like_view(request):
     user = check_validation(request)
     if user and request.method == 'POST':
@@ -169,17 +166,6 @@ def like_view(request):
             existing_like = LikeModel.objects.filter(post_id=post_id, user=user).first()
             if not existing_like:
                 LikeModel.objects.create(post_id=post_id, user=user)
-                # like = LikeModel.objects.create(post_id=post_id, user=user)
-                # sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
-                # from_email = Email("apooravsharma1997@gmail.com")
-                # to_email = Email(like.post.user.email)
-                # subject = "Welcome to Instagram Clone!!"
-                # content = Content("text/plain", "someone just liked your post. Go checkout!")
-                # mail = Mail(from_email, subject, to_email, content)
-                # response = sg.client.mail.send.post(request_body=mail.get())
-                # print(response.status_code)
-                # print(response.body)
-                # print(response.headers)
             else:
                 print existing_like.user.username
                 existing_like.delete()
@@ -190,6 +176,7 @@ def like_view(request):
 
 
 
+#function declaration to comment on the post of a user on the feed page and to review comments
 def comment_view(request):
     user = check_validation(request)
     if user and request.method == 'POST':
@@ -197,9 +184,9 @@ def comment_view(request):
         if form.is_valid():
             post_id = form.cleaned_data.get('post').id
             comment_text = form.cleaned_data.get('comment_text')
-            rev = sentiment(str(comment_text))
+            rev = sentiment(str(comment_text))                    #sentiment function of parallel dots api is used
             review = rev["sentiment"]*100
-            if review >= 60 and review <= 100:
+            if review >= 60 and review <= 100:                  #on the basis of sentiment, analyze whether comment is positive ,negative or neutral
                 review = "Positive Comment!"
             elif review >= 40 and review < 60:
                 review = "Neutral Comment!"
@@ -207,16 +194,6 @@ def comment_view(request):
                 review = "Negative Comment!"
             comment = CommentModel.objects.create(user=user, post_id=post_id, comment_text=comment_text, review=review)
             comment.save()
-            # sg = sendgrid.SendGridAPIClient(apikey=(SENDGRID_API_KEY))
-            # from_email = Email("bhavikasingla99@gmail.com")
-            # to_email = Email(comment.post.user.email)
-            # subject = "Welcome to Instagram Clone!!"
-            # content = Content("text/plain", "someone just commented on your post. Go check")
-            # mail = Mail(from_email, subject, to_email, content)
-            # response = sg.client.mail.send.post(request_body=mail.get())
-            # print(response.status_code)
-            # print(response.body)
-            # print(response.headers)
             return redirect('/feed/')
         else:
             return redirect('/feed/')
