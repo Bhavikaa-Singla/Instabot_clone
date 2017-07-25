@@ -20,7 +20,7 @@ import sendgrid                                                         # sendgr
 from api import SENDGRID_API_KEY                                        # for this we import api key from api.py
 from sendgrid.helpers.mail import *                                     # due to privacy concern i havent uploaded my sendgrid api key
 
-import ctypes
+import ctypes                                                           #ctypes is a foreign function library for Python
 
 
 YOUR_CLIENT_ID = '8059e06dee9e946'                                          #client id to access imgur api
@@ -124,7 +124,7 @@ def post_view(request):
                 post.image_url = client.upload_from_path(path, anon=True)['link']
                 post.save()
 
-                ctypes.windll.user32.MessageBoxW(0, u"post successsfully created", u"SUCCESS", 0)
+                ctypes.windll.user32.MessageBoxW(0, u"post successsfully created", u"SUCCESS", 0)           #to display pop up message on successfully created the post
 
                 return redirect('/feed/')
 
@@ -188,6 +188,7 @@ def like_view(request):
                 # print(response.status_code)
                 # print(response.body)
                 # print(response.headers)
+                ctypes.windll.user32.MessageBoxW(0, u"post has been liked", u"SUCCESS", 0)                      #to display pop up message on liking post successfully
             else:
                 print existing_like.user.username
                 existing_like.delete()
@@ -245,12 +246,11 @@ def logout_view(request):
 
 
 
-# def posts_of_particular_user(request,user_name):
-#     posts=PostModel.objects.all().filter(user__username=user_name)
-#     return render(request,'postsofuser.html',{'posts':posts,'user_name':user_name})
-#     user = check_validation(request)
-#     if user:
-#         posts = PostModel.objects.all().filter(user__username=user_name)
-#         return render(request, 'postsofuser.html', {'posts': posts, 'user_name': user_name})
-#     else:
-#         return redirect('/login/')
+#to view posts of particular user
+def posts_of_particular_user(request,user_name):
+    user = check_validation(request)
+    if user:
+        posts = PostModel.objects.all().filter(user__username=user_name)
+        return render(request, 'userposts.html', {'posts': posts, 'user_name': user_name})
+    else:
+        return redirect('/login/')

@@ -2,14 +2,14 @@
 # for this we have to import urls from django.conf.url
 from django.conf.urls import url
 #from views we import pages which we are giving to url
-from myapp.views import signup_view,login_view,feed_view,post_view,like_view,comment_view,logout_view
+from myapp.views import signup_view,login_view,feed_view,post_view,like_view,comment_view,logout_view,posts_of_particular_user
 
 # there are the patterns which we use to create url for a particular page
 # r is the regular expression
 
 urlpatterns = [
 
-    # url(r'^login/feed/(?P<user_name>.+)/$', posts_of_particular_user),
+    url(r'^login/feed/(?P<user_name>.+)/$', posts_of_particular_user),
     url('logout/', logout_view, name='logout'),
     url('post/', post_view),
     url('feed/', feed_view),
